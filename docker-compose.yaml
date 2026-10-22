@@ -44,8 +44,10 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker compose build` to build the images.
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.2.3}
-  # build: .
+  #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.2.3}
+  build:
+    context: .
+    dockerfile: ./Dockerfile
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -54,13 +56,18 @@ x-airflow-common:
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/my_cred.json
+    AIRFLOW_CONN_GOOGLE_CLOUD-DEFUALT: 'google-cloud-platform://?key_path=/opt/airflow/keys/my_cred.json'
+
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    #- ./keys/my_cred.json
+    - ./Users/imsdatateam1/Documents/Github/Data_engineering/DE_Airflow_with_Docker/keys:/opt/airflow/keys:ro
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -99,7 +106,7 @@ services:
     <<: *airflow-common
     command: webserver
     ports:
-      - 8080:8080
+      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 10s

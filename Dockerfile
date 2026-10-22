@@ -5,7 +5,11 @@ FROM apache/airflow:2.2.3
 ENV AIRFLOW_HOME=/opt/airflow
 
 USER root
-RUN apt-get update -qq && apt-get install vim -qqq
+# RUN apt-get update -qq && apt-get install vim -qqq
+#The sed lines rewrite the repository URLs to the archive, and the Check-Valid-Until line stops apt rejecting the archive’s expired metadata. Note that apt-get install needs -y in a build, so I added it.
+RUN sed -i 's|deb.debian.org/debian|archive.debian.org/debian|g; s|security.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list \
+    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until \
+    && apt-get update -qq && apt-get install -y vim -qqq
 # git gcc g++ -qqq
 
 COPY requirements.txt .
